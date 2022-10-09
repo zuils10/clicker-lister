@@ -12,10 +12,11 @@
 </template>
 
 <script>
-import { inflate } from 'pako/lib/inflate';
+import { inflate, inflateRaw } from 'pako/lib/inflate';
 
 const ANTI_CHEAT_CODE = 'Fe12NAfA3R6z4k0z';
 const ZLIB_HEADER = '7a990d405d2c6fb93aa8fbb0ec1a3b23';
+const DEFLATE_HEADER = '7e8bb5a89f2842ac4af01b3b7e228592';
 
 export default {
   name: 'SaveInput',
@@ -30,6 +31,8 @@ export default {
           this.decodedData =
             newValue.substring(0, ZLIB_HEADER.length) === ZLIB_HEADER
               ? this.decodeZLib(newValue)
+              : newValue.substring(0, DEFLATE_HEADER.length) === DEFLATE_HEADER
+              ? this.decodeDeflate(newValue)
               : this.decodeBase64(newValue);
         } catch (e) {
           this.decodedData = '';
@@ -51,6 +54,11 @@ export default {
     decodeZLib(encoded) {
       let output = atob(encoded.substring(ZLIB_HEADER.length));
       output = JSON.parse(inflate(output, { to: 'string' }));
+      return output;
+    },
+    decodeDeflate(encoded) {
+      let output = atob(encoded.substring(DEFLATE_HEADER.length));
+      output = JSON.parse(inflateRaw(output, { to: 'string' }));
       return output;
     },
     decodeBase64(encoded) {
